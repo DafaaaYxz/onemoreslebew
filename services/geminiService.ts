@@ -1,5 +1,8 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Dan ubah di function:
+const ai = new GoogleGenerativeAI(apiKey);
 
 export interface ImageAttachment {
   inlineData: {
