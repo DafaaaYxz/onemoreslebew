@@ -1,8 +1,4 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Dan ubah di function:
-const ai = new GoogleGenerativeAI(apiKey);
 
 export interface ImageAttachment {
   inlineData: {
@@ -20,9 +16,7 @@ export const sendMessageToGemini = async (
     systemInstruction: string;
   }
 ): Promise<string> => {
-  let currentKeyIndex = 0;
   
-  // Recursive function to try keys
   const tryGenerate = async (retryIdx: number): Promise<string> => {
     if (retryIdx >= config.apiKeys.length) {
       throw new Error("All API keys exhausted. Please update keys in Admin Dashboard.");
@@ -30,65 +24,87 @@ export const sendMessageToGemini = async (
 
     try {
       const apiKey = config.apiKeys[retryIdx];
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenerativeAI(apiKey);
 
-      // Format history
-      const formattedContents = history.map(msg => ({
-        role: msg.role,
-        parts: msg.parts
+      // Initialize model with system instruction
+      const model = ai.getGenerativeModel({ 
+        model: 'gemini-2.0-flash-exp',
+        systemInstruction: config.systemInstruction
+      });
+
+      // Format history for chat - convert 'model' role to 'model' (keep as is)
+      const formattedHistory = history.map(msg => ({
+        role: msg.role === 'model' ? 'model' : 'user',
+        parts: msg.parts.map(p => ({ text: p.text }))
       }));
 
-      // Create current user message parts
+      // Build current message parts
       const currentParts: any[] = [];
       
-      // 1. Add text if exists
-      if (message) {
+      // Add text if exists
+      if (message && message.trim()) {
         currentParts.push({ text: message });
       }
 
-      // 2. Add images if exist
+      // Add images if exist
       if (images && images.length > 0) {
         images.forEach(img => {
-          currentParts.push(img);
+          currentParts.push({
+            inlineData: {
+              mimeType: img.inlineData.mimeType,
+              data: img.inlineData.data
+            }
+          });
         });
       }
 
-      // If no text and no images, don't send
+      // Validate message
       if (currentParts.length === 0) {
         throw new Error("Message cannot be empty");
       }
 
-      formattedContents.push({
-        role: 'user',
-        parts: currentParts
+      // Start chat session with history
+      const chat = model.startChat({
+        history: formattedHistory,
+        generationConfig: {
+          temperature: 1.3,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        }
       });
 
-      const model = ai.getGenerativeModel({ 
-  model: 'gemini-2.5-flash',
-  systemInstruction: config.systemInstruction
-});
+      // Send current message with all parts (text + images)
+      const result = await chat.sendMessage(currentParts);
+      const response = result.response;
+      const text = response.text();
 
-const chat = model.startChat({
-  history: formattedContents.slice(0, -1) // exclude current message
-});
-
-const result = await chat.sendMessage(currentParts);
-const response = await result.response;
-return response.text();
-      
-      if (response.text) {
-        return response.text;
+      if (!text || text.trim() === '') {
+        throw new Error("Empty response from AI");
       }
       
-      throw new Error("Empty response");
+      return text;
 
     } catch (error: any) {
-      console.warn(`Key at index ${retryIdx} failed:`, error.message);
-      // If quota or permission error, try next key
-      if (error.toString().includes("429") || error.toString().includes("403") || error.toString().includes("400")) {
-         return tryGenerate(retryIdx + 1);
+      const errorMsg = error.message || error.toString();
+      console.warn(`API Key index ${retryIdx} failed:`, errorMsg);
+      
+      // Retry with next key if quota/permission error
+      const shouldRetry = 
+        errorMsg.includes("429") || 
+        errorMsg.includes("403") || 
+        errorMsg.includes("RESOURCE_EXHAUSTED") ||
+        errorMsg.includes("quota") ||
+        errorMsg.includes("API_KEY_INVALID") ||
+        errorMsg.includes("PERMISSION_DENIED");
+      
+      if (shouldRetry && retryIdx + 1 < config.apiKeys.length) {
+        console.log(`Switching to next API key (${retryIdx + 1})...`);
+        return tryGenerate(retryIdx + 1);
       }
-      throw error;
+      
+      // If it's the last key or non-retryable error, throw
+      throw new Error(`AI Connection Error: ${errorMsg}`);
     }
   };
 
