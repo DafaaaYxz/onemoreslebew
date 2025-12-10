@@ -63,7 +63,13 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     role: u.role,
                     createdAt: u.created_at,
                     profile: u.profile,
-                    config: u.config
+                    config: u.config || {
+                      aiName: DEFAULT_CONFIG.aiName,
+                      aiPersona: DEFAULT_CONFIG.aiPersona,
+                      devName: DEFAULT_CONFIG.devName,
+                      apiKeys: [],
+                      avatarUrl: ''
+                    }
                 }))
             });
         } catch (error) {
@@ -112,7 +118,13 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             role: user.role,
             createdAt: user.created_at,
             profile: user.profile,
-            config: user.config
+            config: user.config || {
+              aiName: DEFAULT_CONFIG.aiName,
+              aiPersona: DEFAULT_CONFIG.aiPersona,
+              devName: DEFAULT_CONFIG.devName,
+              apiKeys: [],
+              avatarUrl: ''
+            }
           };
 
           if (user.role === 'admin') {
@@ -162,7 +174,13 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         role: user.role,
         createdAt: user.created_at,
         profile: user.profile,
-        config: user.config
+        config: user.config || {
+          aiName: DEFAULT_CONFIG.aiName,
+          aiPersona: DEFAULT_CONFIG.aiPersona,
+          devName: DEFAULT_CONFIG.devName,
+          apiKeys: [],
+          avatarUrl: ''
+        }
     };
 
     setCurrentUser(mappedUser);
@@ -187,7 +205,13 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           role: user.role,
           createdAt: user.created_at,
           profile: user.profile,
-          config: user.config
+          config: user.config || {
+            aiName: DEFAULT_CONFIG.aiName,
+            aiPersona: DEFAULT_CONFIG.aiPersona,
+            devName: DEFAULT_CONFIG.devName,
+            apiKeys: [],
+            avatarUrl: ''
+          }
       };
       setCurrentUser(mappedUser);
       localStorage.setItem('central_gpt_active_session', key);
@@ -218,7 +242,13 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         role: user.role,
         created_at: user.createdAt,
         profile: user.profile,
-        config: user.config
+        config: user.config || {
+          aiName: DEFAULT_CONFIG.aiName,
+          aiPersona: DEFAULT_CONFIG.aiPersona,
+          devName: DEFAULT_CONFIG.devName,
+          apiKeys: [],
+          avatarUrl: ''
+        }
     });
     
     if (error) {
