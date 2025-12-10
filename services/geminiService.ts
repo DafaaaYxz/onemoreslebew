@@ -63,14 +63,19 @@ export const sendMessageToGemini = async (
         parts: currentParts
       });
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: formattedContents,
-        config: {
-          systemInstruction: config.systemInstruction,
-        }
-      });
+      const model = ai.getGenerativeModel({ 
+  model: 'gemini-2.5-flash',
+  systemInstruction: config.systemInstruction
+});
 
+const chat = model.startChat({
+  history: formattedContents.slice(0, -1) // exclude current message
+});
+
+const result = await chat.sendMessage(currentParts);
+const response = await result.response;
+return response.text();
+      
       if (response.text) {
         return response.text;
       }
