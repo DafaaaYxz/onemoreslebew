@@ -13,11 +13,11 @@ const ChatInterface: React.FC = () => {
   const userConfig = currentUser?.config || {};
 
   const config = {
-    aiName: userConfig.aiName || globalConfig.aiName,
-    aiPersona: userConfig.aiPersona || globalConfig.aiPersona,
-    devName: userConfig.devName || globalConfig.devName,
-    apiKeys: (userConfig.apiKeys && userConfig.apiKeys.length > 0) ? userConfig.apiKeys : globalConfig.apiKeys
-  };
+  aiName: userConfig.aiName || globalConfig.aiName,
+  aiPersona: userConfig.aiPersona || globalConfig.aiPersona || PERSONA,
+  devName: userConfig.devName || globalConfig.devName,
+  apiKeys: (userConfig.apiKeys && userConfig.apiKeys.length > 0) ? userConfig.apiKeys : globalConfig.apiKeys
+};
   
   const replacePlaceholders = (text: string) => {
     if (!text) return "";
